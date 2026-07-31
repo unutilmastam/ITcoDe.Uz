@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="ITcoDe.Uz logo">
+  <defs>
+    <linearGradient id="itc-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22A6FF"/>
+      <stop offset="0.5" stop-color="#5B6CFF"/>
+      <stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+    <linearGradient id="itc-px" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#3BA9FF"/>
+      <stop offset="1" stop-color="#1E7BE0"/>
+    </linearGradient>
+    <filter id="itc-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="238" fill="#070B14"/>
+  <circle cx="256" cy="256" r="238" fill="none" stroke="url(#itc-g)" stroke-width="9" filter="url(#itc-glow)"/>
+
+  <g fill="url(#itc-px)">
+    <rect x="150" y="88"  width="9"  height="9"  opacity=".55"/>
+    <rect x="176" y="72"  width="14" height="14" opacity=".85"/>
+    <rect x="205" y="96"  width="8"  height="8"  opacity=".5"/>
+    <rect x="118" y="120" width="16" height="16" opacity=".9"/>
+    <rect x="152" y="128" width="10" height="10" opacity=".6"/>
+    <rect x="188" y="118" width="20" height="20"/>
+    <rect x="216" y="106" width="10" height="10" opacity=".55"/>
+    <rect x="128" y="158" width="11" height="11" opacity=".7"/>
+    <rect x="160" y="150" width="22" height="22"/>
+    <rect x="196" y="160" width="12" height="12" opacity=".65"/>
+    <rect x="110" y="186" width="18" height="18" opacity=".8"/>
+    <rect x="146" y="192" width="10" height="10" opacity=".5"/>
+    <rect x="176" y="184" width="14" height="14" opacity=".75"/>
+    <rect x="124" y="214" width="12" height="12" opacity=".6"/>
+    <rect x="158" y="212" width="9"  height="9"  opacity=".45"/>
+  </g>
+
+  <g fill="none" stroke="url(#itc-g)" stroke-width="17" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M172 168 C 140 168, 148 200, 146 226 C 144 250, 130 258, 112 262 C 130 266, 144 274, 146 298 C 148 324, 140 356, 172 356"/>
+    <path d="M340 168 C 372 168, 364 200, 366 226 C 368 250, 382 258, 400 262 C 382 266, 368 274, 366 298 C 364 324, 372 356, 340 356"/>
+  </g>
+
+  <g fill="url(#itc-g)">
+    <rect x="188" y="176" width="31" height="31" rx="3"/>
+    <rect x="188" y="222" width="31" height="128" rx="3"/>
+    <path d="M231 222 H331 L299 259 H231 Z"/>
+    <rect x="262" y="222" width="32" height="128" rx="3"/>
+  </g>
+</svg>
