@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MQTT&#x27;da duplicate client ID: qurilma nega har 30 soniyada uziladi — ITcoDe.Uz</title>
+<meta name="description" content="Ikkita mijoz bir xil client ID bilan ulanganda broker ularni navbat bilan uzadi. Muammoni topish va client ID ni to&#x27;g&#x27;ri yasash usuli.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/mqtt-duplicate-client-id-muammosi.html">
+<meta property="og:title" content="MQTT&#x27;da duplicate client ID: qurilma nega har 30 soniyada uziladi">
+<meta property="og:description" content="Ikkita mijoz bir xil client ID bilan ulanganda broker ularni navbat bilan uzadi. Muammoni topish va client ID ni to&#x27;g&#x27;ri yasash usuli.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">MQTT</p>
+  <h1>MQTT'da duplicate client ID: qurilma nega har 30 soniyada uziladi</h1>
+  <p class="lede">Signal kuchli, tarmoq barqaror, kod toza — lekin qurilma muntazam uzilib turadi. Bu xatoni topishga bir necha kun ketgan edi va sabab kodning eng ko'rinmas joyida edi.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~6 daqiqa</span></div>
+
+  <h2>Belgilar</h2>
+  <p>NBcaR loyihasi ishga tushgach, seriya monitorda quyidagi manzara paydo bo'ldi:</p>
+
+  <pre><code><span class="c">MQTT connected</span>
+<span class="c">... 28 soniya jimlik ...</span>
+<span class="c">MQTT disconnected, rc=-3</span>
+<span class="c">Reconnecting...</span>
+<span class="c">MQTT connected</span>
+<span class="c">... 31 soniya jimlik ...</span>
+<span class="c">MQTT disconnected, rc=-3</span></code></pre>
+
+  <p>Birinchi taxminlar mantiqiy edi va hammasi noto'g'ri chiqdi: GSM signali zaif emas edi, keep-alive vaqti to'g'ri sozlangan edi, brokerda limit tugamagan edi, quvvat ham yetarli edi.</p>
+
+  <h2>Haqiqiy sabab</h2>
+  <p>MQTT protokolida har bir mijoz brokerga <strong>noyob client ID</strong> bilan ulanishi shart. Bu identifikator sessiyani belgilaydi.</p>
+  <p>Agar ikkinchi mijoz xuddi shu ID bilan ulansa, broker buni "bir xil qurilma qayta ulanyapti" deb tushunadi va <strong>eskisini majburan uzadi</strong>. Bu xato emas, protokolning belgilangan xatti-harakati.</p>
+  <p>Mening kodimda esa shunday yozilgan edi:</p>
+
+  <pre><code><span class="c">// qurilmada</span>
+client.connect(<span class="s">"nbcar"</span>, user, pass);
+
+<span class="c">// telefondagi PWA da</span>
+mqtt.connect({ clientId: <span class="s">"nbcar"</span>, ... });</code></pre>
+
+  <p>Ikkalasi ham <code>nbcar</code>. Natijada telefon ulanganda qurilma uzilardi, qurilma qayta ulanganda telefon uzilardi. Ular navbat bilan bir-birini quvib chiqarardi va bu abadiy davom etardi.</p>
+
+  <div class="card note">
+    <p><strong>Nima uchun aynan 30 soniya?</strong> Bu tasodif emas edi. PWA da avtomatik qayta ulanish intervali 30 soniyaga sozlangan edi. Ya'ni tsikl davri kodning o'zidan kelib chiqqan.</p>
+  </div>
+
+  <h2>Yechim</h2>
+  <p>Har bir mijozga o'z ID sini berish kerak. Lekin oddiy "nbcar-device" va "nbcar-app" ham yetarli emas — agar foydalanuvchi ikki telefondan kirsa, muammo qaytadi.</p>
+  <p>To'g'ri yo'l: barqaror qism va tasodifiy qismni birlashtirish.</p>
+
+  <pre><code><span class="c">// qurilmada — MAC manzil noyob va o'zgarmas</span>
+String cid = <span class="s">"nbcar-dev-"</span> + String((uint32_t)ESP.getEfuseMac(), HEX);
+client.connect(cid.c_str(), user, pass);</code></pre>
+
+  <pre><code><span class="c">// PWA da — har sessiya uchun tasodifiy quyruq</span>
+<span class="k">const</span> cid = <span class="s">'nbcar-app-'</span> +
+  Math.random().toString(<span class="s">16</span>).slice(<span class="s">2</span>, <span class="s">10</span>);</code></pre>
+
+  <p>Qurilma uchun MAC manzil ideal: u har platada boshqacha va qayta yuklanganda o'zgarmaydi. Ilova uchun esa tasodifiy qism to'g'ri — chunki bir foydalanuvchi bir nechta qurilmadan kirishi mumkin.</p>
+
+  <h2>Qanday tekshirish mumkin</h2>
+  <p>Agar shunga o'xshash muammoga duch kelsangiz, quyidagilarni ketma-ket tekshiring:</p>
+  <ol>
+    <li><strong>Uzilish davri barqarormi?</strong> Agar ha — bu tarmoq muammosi emas. Tarmoq nosozligi tasodifiy vaqtlarda bo'ladi, aniq interval bilan emas.</li>
+    <li><strong>Ikkinchi mijozni o'chiring.</strong> Telefondagi ilovani yoping va qurilmani kuzating. Agar uzilish to'xtasa — sabab topildi.</li>
+    <li><strong>Broker jurnaliga qarang.</strong> EMQX va Mosquitto da odatda "client ... kicked" yoki "takenover" degan yozuv chiqadi.</li>
+    <li><strong>Kodda client ID ni qidiring.</strong> Ko'pincha u qattiq yozilgan bo'ladi va namunadan ko'chirilgan bo'ladi.</li>
+  </ol>
+
+  <h2>Nima uchun bu tez-tez uchraydi</h2>
+  <p>Internetdagi ko'pchilik namunada client ID oddiy satr sifatida yoziladi — <code>"ESP32Client"</code> yoki <code>"mqttClient"</code>. Bitta qurilma bilan sinab ko'rganingizda hammasi ishlaydi va muammo ko'rinmaydi.</p>
+  <p>U faqat ikkinchi mijoz qo'shilganda paydo bo'ladi. Aynan shu paytda esa siz allaqachon boshqa qismlarni yozib bo'lgan bo'lasiz va xatoni yaqinda yozilgan koddan qidirasiz.</p>
+
+  <h2>Qo'shimcha: clean session</h2>
+  <p>Client ID ni tuzatgandan keyin yana bir jihatga e'tibor bering. MQTT da <code>cleanSession</code> bayrog'i bor:</p>
+  <ul>
+    <li><strong>true</strong> — har ulanishda sessiya toza boshlanadi, obunalar qayta e'lon qilinadi</li>
+    <li><strong>false</strong> — broker obunalarni va yetkazilmagan xabarlarni saqlab qoladi</li>
+  </ul>
+  <p>Avtomobil boshqaruvi uchun men <code>true</code> ni tanladim. Sabab: uzilish paytida yuborilgan eski buyruq qayta ulangandan keyin bajarilib ketishini istamayman. "O't oldir" buyrug'i besh daqiqa kechikib kelsa, bu kutilmagan natija beradi.</p>
+
+  <h2>Xulosa</h2>
+  <p>Client ID — kichik detal, lekin u butun tizimning barqarorligini belgilaydi. Qoida oddiy: <strong>har bir ulanuvchi uchun alohida va noyob ID</strong>.</p>
+  <p>Bu xato ayniqsa achchiq, chunki u kodda emas, konfiguratsiyada yashiringan va debug jarayonida ko'zga tashlanmaydi. Endi men har qanday MQTT loyihasini aynan shu joyni tekshirishdan boshlayman.</p>
+
+  <div class="tags"><span class="tag">MQTT</span><span class="tag">EMQX</span><span class="tag">ESP32</span><span class="tag">Debug</span><span class="tag">IoT</span></div>
+
+  <div class="prevnext"><a href="pc817-optopara-avtomobil-tugmalari.html">&larr; PC817 optopara</a><a href="millis-bloklamaydigan-tugma-bosish.html">millis() state machine &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

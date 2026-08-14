@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ESP32 va SIM800L bilan avtomobilni masofadan o&#x27;t oldirish — ITcoDe.Uz</title>
+<meta name="description" content="TTGO T-Call platasida GSM orqali avtomobilni boshqarish: quvvat muammosi, optopara ulanishi va push-start moduliga to&#x27;g&#x27;ri signal berish.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/esp32-sim800l-masofadan-ot-oldirish.html">
+<meta property="og:title" content="ESP32 va SIM800L bilan avtomobilni masofadan o&#x27;t oldirish">
+<meta property="og:description" content="TTGO T-Call platasida GSM orqali avtomobilni boshqarish: quvvat muammosi, optopara ulanishi va push-start moduliga to&#x27;g&#x27;ri signal berish.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">IoT · Avtomobil</p>
+  <h1>ESP32 va SIM800L bilan avtomobilni masofadan o't oldirish</h1>
+  <p class="lede">Telefondagi tugma bosilganda avtomobil o't oladi. Oradagi masofa — bir necha ming kilometr bo'lishi ham mumkin. Quyida shu zanjirning har bo'g'ini va yo'lda uchragan uchta jiddiy muammo.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~8 daqiqa</span></div>
+
+  <h2>Vazifa</h2>
+  <p>Chevrolet Cobalt 2017 — zavod push-start tizimisiz. Maqsad: telefondan turib dvigatelni yoqish, eshiklarni qulflash va avtomobil qayerdaligini ko'rish. Wi-Fi hisobga olinmaydi, chunki avtomobil ko'pincha uydan uzoqda turadi. Demak GSM kerak.</p>
+
+  <h2>Nima uchun TTGO T-Call</h2>
+  <p>Alohida ESP32 va alohida SIM800L modulini ulash mumkin, lekin ular orasida uchta narsani o'zingiz hal qilishingiz kerak bo'ladi: quvvat, sath moslashtirish va joylashuv. TTGO T-Call V1.3 platasida ikkalasi bitta taxtada, orada tayyor sath konverteri va SIM ushlagichi bilan keladi.</p>
+  <p>Muhimi — bu platada AXP192 quvvat boshqaruv chipi bor. SIM800L uzatish paytida qisqa vaqtga <strong>2 amper</strong> gacha tok tortadi. Oddiy USB portidan quvvat bersangiz, modul har uzatishda o'chib qoladi va siz sababini soatlab qidirasiz.</p>
+
+  <div class="card note">
+    <p><strong>Birinchi muammo.</strong> Plata ishga tushdi, seriya monitorda hammasi joyida, lekin SIM karta tarmoqqa ulanmaydi. Sabab — noutbukning USB porti yetarli tok bermaydi. Yechim: 5V 2A adapter yoki avtomobilning o'z akkumulyatori orqali quvvat berish.</p>
+  </div>
+
+  <h2>Push-start moduli</h2>
+  <p>Avtomobilda zavod tugmasi bo'lmagani uchun EC003 turkumidagi push-start modul o'rnatiladi. U uchta asosiy chiziqni boshqaradi: eshik qulfi, izlash/o't oldirish va ochish. ESP32 shu modulning tugmalarini "bosishi" kerak.</p>
+  <p>Menda GPIO taqsimoti shunday:</p>
+
+  <table>
+    <thead><tr><th>GPIO</th><th>Vazifa</th><th>Bosish turi</th></tr></thead>
+    <tbody>
+      <tr><td><b>14</b></td><td>Qulflash (lock)</td><td>Qisqa</td></tr>
+      <tr><td><b>13</b></td><td>Izlash / o't oldirish</td><td>Qisqa yoki uzun</td></tr>
+      <tr><td><b>15</b></td><td>Ochish (unlock)</td><td>Qisqa</td></tr>
+    </tbody>
+  </table>
+
+  <p>Uzun bosish — <code>3300 ms</code>. Bu tajriba yo'li bilan topilgan raqam: 3000 ms da modul ba'zan javob bermadi, 3500 ms da esa ikkilamchi funksiya ishga tushib ketdi. Har bir modul turi uchun bu qiymatni o'zingiz o'lchashingiz kerak.</p>
+
+  <h2>Nima uchun to'g'ridan-to'g'ri ulash mumkin emas</h2>
+  <p>ESP32 chiqishi 3.3 volt beradi, avtomobil tarmog'i esa 12 volt va u toza emas — starter aylanganda kuchlanish 9 voltgacha tushadi, generator ishga tushganda 14.4 voltgacha ko'tariladi, ba'zan qisqa impulslar chiqadi.</p>
+  <p>Agar platani to'g'ridan-to'g'ri ulasangiz, birinchi o't oldirishda ESP32 kuyadi. Shuning uchun orada <strong>PC817 optopara</strong> turadi — u ikki tomonni yorug'lik orqali ajratadi, elektr aloqasi umuman bo'lmaydi. Bu haqda <a href="pc817-optopara-avtomobil-tugmalari.html">alohida maqolada</a> batafsil yozganman.</p>
+
+  <h2>Bulut tomoni</h2>
+  <p>Qurilma va telefon o'rtasida to'g'ridan-to'g'ri aloqa yo'q — orada MQTT broker turadi. Men EMQX Cloud dan foydalanaman, TLS bilan 8883-portda.</p>
+  <p>Sxema oddiy: telefon buyruqni <code>car/cmd</code> mavzusiga yozadi, qurilma unga obuna bo'lgan va darhol oladi. Bajarilgach, qurilma <code>car/state</code> ga holatni yozadi va telefon uni ko'radi.</p>
+
+  <pre><code><span class="c">// buyruqni qabul qilish</span>
+<span class="k">void</span> onMessage(<span class="k">char</span>* topic, byte* payload, <span class="k">unsigned int</span> len) {
+  StaticJsonDocument&lt;192&gt; doc;
+  <span class="k">if</span> (deserializeJson(doc, payload, len)) <span class="k">return</span>;
+
+  <span class="k">const char</span>* act = doc[<span class="s">"action"</span>];
+  <span class="k">if</span> (!strcmp(act, <span class="s">"start"</span>))  pressBegin(PIN_START, T_LONG);
+  <span class="k">if</span> (!strcmp(act, <span class="s">"lock"</span>))   pressBegin(PIN_LOCK,  T_SHORT);
+  <span class="k">if</span> (!strcmp(act, <span class="s">"unlock"</span>)) pressBegin(PIN_OPEN,  T_SHORT);
+}</code></pre>
+
+  <p>E'tibor bering: <code>pressBegin()</code> tugmani bosib <em>turmaydi</em>, faqat bosishni boshlaydi va darhol qaytadi. Nima uchun shunday qilinganini <a href="millis-bloklamaydigan-tugma-bosish.html">bloklamaydigan mantiq haqidagi maqolada</a> tushuntirganman.</p>
+
+  <h2>Ikkinchi muammo: qurilma har yarim daqiqada uzilardi</h2>
+  <p>Tizim ishlab ketdi, lekin g'alati xatti-harakat paydo bo'ldi — qurilma taxminan har 30 soniyada MQTT dan uzilib, qayta ulanardi. Signal kuchi yaxshi, tarmoq barqaror.</p>
+  <p>Sabab kutilmagan joydan chiqdi: telefondagi PWA va qurilma brokerga <strong>bir xil client ID</strong> bilan ulanayotgan edi. Bu MQTT protokolida taqiqlangan va broker eskisini majburan uzadi. Batafsil tahlil — <a href="mqtt-duplicate-client-id-muammosi.html">shu maqolada</a>.</p>
+
+  <h2>Uchinchi muammo: GPS yolg'on koordinata berardi</h2>
+  <p>Xaritada avtomobil goh Denovda, goh 40 kilometr narida ko'rinardi. Modul koordinata beryapti, lekin u ishonchsiz — sun'iy yo'ldosh soni yetarli emas yoki geometriyasi yomon.</p>
+  <p>Yechim: har bir koordinatani qabul qilishdan oldin filtrdan o'tkazish — kamida 4 ta sun'iy yo'ldosh va HDOP qiymati 5 dan kichik bo'lishi shart. Filtr mantiqini <a href="mqtt-duplicate-client-id-muammosi.html">GPS haqidagi yozuvda</a> ko'rsatganman.</p>
+
+  <h2>Xavfsizlik haqida</h2>
+  <p>Avtomobilni masofadan o't oldirish qulay, lekin xavf ham tug'diradi. Amalda men quyidagilarni majburiy deb bilaman:</p>
+  <ul>
+    <li>TLS shifrlash — ochiq 1883-port emas, 8883 va sertifikat tekshiruvi bilan</li>
+    <li>Har bir qurilma uchun alohida parol, umumiy hisob emas</li>
+    <li>Dvigatel yoqilganda tormoz bosilmasa, avtomobil harakatga kelmasligi — bu push-start modulining o'z himoyasi, uni chetlab o'tmang</li>
+    <li>Yopiq garajda masofadan o't oldirishni bloklash — is gazi jiddiy xavf</li>
+  </ul>
+
+  <div class="card note">
+    <p><strong>Ogohlantirish.</strong> Avtomobil elektr tizimiga aralashish kafolatni bekor qilishi va xavf tug'dirishi mumkin. Tajribangiz bo'lmasa, ulanishni avto elektrik bilan birga bajaring va ishni akkumulyator klemmasi uzilgan holda boshlang.</p>
+  </div>
+
+  <h2>Natija</h2>
+  <p>Tizim hozir har kuni ishlaydi. Telefondagi tugma bosilishidan dvigatel aylanishigacha o'rtacha 2–4 soniya ketadi — vaqtning katta qismi GSM tarmog'iga ulanishga sarflanadi.</p>
+  <p>Eng ko'p vaqt olgan qism kod emas, balki avtomobil tomoni bo'ldi: qaysi sim qayerga borishini aniqlash, to'g'ri impuls uzunligini topish va uzilishlarga bardoshli qilish.</p>
+
+  <div class="tags"><span class="tag">ESP32</span><span class="tag">SIM800L</span><span class="tag">MQTT</span><span class="tag">GPS</span><span class="tag">Avto elektronika</span></div>
+
+  <div class="prevnext"><span></span><a href="pc817-optopara-avtomobil-tugmalari.html">PC817 optopara &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

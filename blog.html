@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maqolalar — ITcoDe.Uz</title>
+<meta name="description" content="ITcoDe.Uz texnik maqolalari: ESP32, MQTT, GPS, PWA, Firebase, Telegram botlar va avto elektronika bo&#x27;yicha amaliy yechimlar.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/blog.html">
+<meta property="og:title" content="Maqolalar">
+<meta property="og:description" content="ITcoDe.Uz texnik maqolalari: ESP32, MQTT, GPS, PWA, Firebase, Telegram botlar va avto elektronika bo&#x27;yicha amaliy yechimlar.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="index.html">&larr; Bosh sahifa</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">Texnik yozuvlar</p>
+  <h1>Maqolalar</h1>
+  <p class="lede">Real loyihalardan chiqqan yechimlar: nima ishladi, nima ishlamadi va nima uchun. Har biri o&#39;zim duch kelgan muammo va uni hal qilish yo&#39;li.</p>
+
+  <ul class="post-list">
+    <li><a href="esp32-sim800l-masofadan-ot-oldirish.html">
+      <span class="n">01 · IoT · Avtomobil</span>
+      <h3>ESP32 va SIM800L bilan avtomobilni masofadan o&#x27;t oldirish</h3>
+      <p>TTGO T-Call platasida GSM orqali avtomobilni boshqarish: quvvat muammosi, optopara ulanishi va push-start moduliga to&#x27;g&#x27;ri signal berish.</p>
+    </a></li>
+    <li><a href="pc817-optopara-avtomobil-tugmalari.html">
+      <span class="n">02 · Elektronika</span>
+      <h3>PC817 optopara bilan avtomobil tugmalarini boshqarish</h3>
+      <p>Nega relening o&#x27;rniga optopara? 12 voltli avtomobil tarmog&#x27;ini 3.3 voltli ESP32 dan galvanik ajratish va push-start modulini xavfsiz ulash.</p>
+    </a></li>
+    <li><a href="mqtt-duplicate-client-id-muammosi.html">
+      <span class="n">03 · MQTT</span>
+      <h3>MQTT&#x27;da duplicate client ID: qurilma nega har 30 soniyada uziladi</h3>
+      <p>Ikkita mijoz bir xil client ID bilan ulanganda broker ularni navbat bilan uzadi. Muammoni topish va client ID ni to&#x27;g&#x27;ri yasash usuli.</p>
+    </a></li>
+    <li><a href="millis-bloklamaydigan-tugma-bosish.html">
+      <span class="n">04 · Arduino</span>
+      <h3>delay() o&#x27;rniga millis(): bloklamaydigan tugma bosish mantiqi</h3>
+      <p>delay(3300) qurilmani uch soniyaga o&#x27;ldiradi — MQTT uziladi, GPS o&#x27;qilmaydi. State machine bilan bir vaqtda bir nechta ishni bajarish.</p>
+    </a></li>
+    <li><a href="gps-fix-sifatini-filtrlash.html">
+      <span class="n">05 · GPS</span>
+      <h3>GPS yolg&#x27;on koordinata beryapti: fix sifatini filtrlash</h3>
+      <p>Modul koordinata qaytaradi, lekin u ishonchsiz. Sun&#x27;iy yo&#x27;ldosh soni va HDOP orqali yaroqsiz nuqtalarni tashlab yuborish.</p>
+    </a></li>
+    <li><a href="yagona-faylli-pwa-arxitekturasi.html">
+      <span class="n">06 · PWA</span>
+      <h3>Yagona faylli PWA: nega bitta HTML ba&#x27;zan to&#x27;g&#x27;ri tanlov</h3>
+      <p>Build vositasisiz, node_modules&#x27;siz PWA. Qachon bu yondashuv ishlaydi, qachon esa muammoga aylanadi.</p>
+    </a></li>
+    <li><a href="firestore-realtime-sinxronizatsiya.html">
+      <span class="n">07 · Firebase</span>
+      <h3>Firestore real vaqt sinxronizatsiyasi va men yo&#x27;l qo&#x27;ygan xato</h3>
+      <p>onSnapshot bilan bir necha qurilma o&#x27;rtasida ma&#x27;lumot sinxronizatsiyasi, hamda mahalliy holat bulutdagi ma&#x27;lumotni yozib yuborgan hodisa.</p>
+    </a></li>
+    <li><a href="aiogram-3-buyurtma-boti.html">
+      <span class="n">08 · Telegram</span>
+      <h3>aiogram 3 bilan buyurtma qabul qiluvchi Telegram bot</h3>
+      <p>FSM orqali bosqichma-bosqich buyurtma yig&#x27;ish, tugmalar, ma&#x27;lumot saqlash va admin xabarnomasi — ishlaydigan tuzilma.</p>
+    </a></li>
+    <li><a href="esp32-ota-yangilash.html">
+      <span class="n">09 · IoT</span>
+      <h3>ESP32 uchun OTA: qurilmani ochmasdan dasturini yangilash</h3>
+      <p>Avtomobilga o&#x27;rnatilgan platani har safar chiqarib olish mumkin emas. Havo orqali yangilash, uni xavfsiz qilish va rollback muammosi.</p>
+    </a></li>
+    <li><a href="telegram-bot-render-keep-alive.html">
+      <span class="n">10 · DevOps</span>
+      <h3>Telegram botni Render&#x27;ga joylash va uyqu rejimi bilan kurash</h3>
+      <p>Railway&#x27;dan Render&#x27;ga ko&#x27;chirish, webhook va polling tanlovi, bepul tarifda xizmatni tirik saqlash usuli.</p>
+    </a></li>
+  </ul>
+
+  <div class="card">
+    <p><strong>Savolingiz bormi?</strong> Maqoladagi yechimni o&#39;z loyihangizga moslashda yordam kerak bo&#39;lsa — <a href="contact.html">Aloqa sahifasiga</a> yozing.</p>
+  </div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

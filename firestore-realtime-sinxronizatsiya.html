@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Firestore real vaqt sinxronizatsiyasi va men yo&#x27;l qo&#x27;ygan xato — ITcoDe.Uz</title>
+<meta name="description" content="onSnapshot bilan bir necha qurilma o&#x27;rtasida ma&#x27;lumot sinxronizatsiyasi, hamda mahalliy holat bulutdagi ma&#x27;lumotni yozib yuborgan hodisa.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/firestore-realtime-sinxronizatsiya.html">
+<meta property="og:title" content="Firestore real vaqt sinxronizatsiyasi va men yo&#x27;l qo&#x27;ygan xato">
+<meta property="og:description" content="onSnapshot bilan bir necha qurilma o&#x27;rtasida ma&#x27;lumot sinxronizatsiyasi, hamda mahalliy holat bulutdagi ma&#x27;lumotni yozib yuborgan hodisa.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">Firebase</p>
+  <h1>Firestore real vaqt sinxronizatsiyasi va men yo'l qo'ygan xato</h1>
+  <p class="lede">Ma'lumot ikkita qurilma o'rtasida o'zi yangilanadi — bu sehrli tuyuladi. Toki bir kun mahalliy holat buluddagi to'g'ri ma'lumotni yozib yuborganini ko'rmaguningizcha.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~7 daqiqa</span></div>
+
+  <h2>Nima uchun Firestore</h2>
+  <p>Yetkazib berish ilovasida buyurtma bir vaqtning o'zida uch joyda ko'rinishi kerak: mijoz telefonida, oshxona ekranida va admin panelida. Har biri holat o'zgarishini darhol bilishi shart.</p>
+  <p>Buni WebSocket bilan yozish mumkin, lekin unda server kerak, uni ushlab turish kerak, uzilishlarni qayta ulashni o'zingiz yozasiz. Firestore da esa <code>onSnapshot</code> bitta qatorda shu ishni bajaradi.</p>
+
+  <h2>Asosiy naqsh</h2>
+  <p>Tinglovchi o'rnatiladi va har o'zgarishda funksiya chaqiriladi:</p>
+
+  <pre><code><span class="k">import</span> { collection, query, where, onSnapshot }
+  <span class="k">from</span> <span class="s">'firebase/firestore'</span>;
+
+<span class="k">const</span> q = query(
+  collection(db, <span class="s">'orders'</span>),
+  where(<span class="s">'status'</span>, <span class="s">'in'</span>, [<span class="s">'new'</span>, <span class="s">'cooking'</span>])
+);
+
+<span class="k">const</span> stop = onSnapshot(q, (snap) =&gt; {
+  <span class="k">const</span> orders = snap.docs.map(d =&gt; ({ id: d.id, ...d.data() }));
+  renderKitchen(orders);
+});</code></pre>
+
+  <p>Yangi buyurtma qo'shilsa, holat o'zgarsa yoki hujjat o'chirilsa — funksiya o'zi chaqiriladi. Serverga so'rov yuborish, javob kutish, qayta so'rash kerak emas.</p>
+
+  <div class="card note">
+    <p><strong>Muhim.</strong> <code>onSnapshot</code> obyekt qaytaradi — uni saqlang. Sahifa yopilganda yoki komponent olib tashlanganda tinglovchini to'xtatish kerak, aks holda ular to'planib boradi va o'qish limitini yeb qo'yadi.</p>
+  </div>
+
+  <h2>Mening xatom</h2>
+  <p>Unutilmas Ta'm da savat mahalliy holatda saqlanardi va bir vaqtning o'zida Firestore ga ham yozilardi. Mantiq shunday edi:</p>
+
+  <pre><code><span class="c">// ❌ noto'g'ri</span>
+onSnapshot(cartRef, (doc) =&gt; {
+  cart = doc.data();      <span class="c">// buluddan olamiz</span>
+  render();
+});
+
+<span class="k">function</span> addItem(item) {
+  cart.items.push(item);          <span class="c">// mahalliy o'zgartiramiz</span>
+  setDoc(cartRef, cart);          <span class="c">// butun obyektni yozamiz</span>
+}</code></pre>
+
+  <p>Bir qarashda mantiqiy. Amalda esa foydalanuvchi ikkita qurilmadan kirganda mahsulotlar yo'qola boshladi.</p>
+
+  <h3>Nima sodir bo'lgan</h3>
+  <p>Foydalanuvchi telefonda mahsulot qo'shadi. Shu paytda planshetda hali eski savat turibdi. Planshetda ham biror narsa qo'shiladi — va u <strong>butun obyektni</strong> yozib yuboradi. Telefondagi qo'shilgan mahsulot yo'qoladi.</p>
+  <p>Bu klassik "last write wins" muammosi. <code>setDoc</code> hujjatni to'liq almashtiradi, oradagi o'zgarishlarni hisobga olmaydi.</p>
+
+  <h2>Yechim</h2>
+  <p>Ikki narsani o'zgartirdim.</p>
+
+  <h3>1. Butun obyektni emas, aniq maydonni yangilash</h3>
+
+  <pre><code><span class="k">import</span> { updateDoc, arrayUnion } <span class="k">from</span> <span class="s">'firebase/firestore'</span>;
+
+<span class="k">async function</span> addItem(item) {
+  <span class="k">await</span> updateDoc(cartRef, {
+    items: arrayUnion(item)   <span class="c">// faqat qo'shadi</span>
+  });
+}</code></pre>
+
+  <p><code>arrayUnion</code> serverda bajariladi. U mavjud massivga element qo'shadi va boshqa hech narsaga tegmaydi. Ikki qurilma bir vaqtda qo'shsa ham, ikkalasi ham saqlanadi.</p>
+
+  <h3>2. Miqdor uchun tranzaksiya</h3>
+  <p>Mahsulot sonini o'zgartirish murakkabroq, chunki eski qiymatni o'qib, yangisini hisoblash kerak. Bu yerda tranzaksiya ishlatiladi:</p>
+
+  <pre><code><span class="k">import</span> { runTransaction } <span class="k">from</span> <span class="s">'firebase/firestore'</span>;
+
+<span class="k">await</span> runTransaction(db, <span class="k">async</span> (tx) =&gt; {
+  <span class="k">const</span> snap = <span class="k">await</span> tx.get(cartRef);
+  <span class="k">const</span> items = snap.data().items;
+  <span class="k">const</span> i = items.findIndex(x =&gt; x.id === itemId);
+  items[i].qty += delta;
+  tx.update(cartRef, { items });
+});</code></pre>
+
+  <p>Agar tranzaksiya davomida ma'lumot o'zgarsa, Firestore uni avtomatik qayta bajaradi. Poyga holati yo'qoladi.</p>
+
+  <h2>Oflayn rejim</h2>
+  <p>Firestore ning kutilmagan foydali tomoni — u oflayn ishlaydi. Internet uzilganda yozuvlar mahalliy navbatda turadi va aloqa tiklanganda o'zi yuboriladi.</p>
+  <p>Lekin bu foydalanuvchiga ko'rinishi kerak. Aks holda u buyurtma berdim deb o'ylaydi, aslida u hali yuborilmagan:</p>
+
+  <pre><code>onSnapshot(cartRef, { includeMetadataChanges: <span class="k">true</span> }, (doc) =&gt; {
+  <span class="k">const</span> pending = doc.metadata.hasPendingWrites;
+  showSyncBadge(pending ? <span class="s">'yuborilmoqda'</span> : <span class="s">'saqlandi'</span>);
+});</code></pre>
+
+  <h2>Xarajatni nazorat qilish</h2>
+  <p>Firestore har o'qish uchun hisoblaydi. <code>onSnapshot</code> esa har o'zgarishda hujjatlarni qayta o'qiydi. Beparvo yozilgan kod hisobni tez o'stiradi.</p>
+  <p>Amalda foydali bo'lgan qoidalar:</p>
+  <ul>
+    <li>So'rovni <code>where</code> bilan toraytiring — barcha buyurtmalarni emas, faqat faollarini tinglang</li>
+    <li>Ro'yxatda hujjatning to'liq nusxasini emas, kerakli maydonlarni saqlang</li>
+    <li>Tez o'zgaradigan ma'lumotni alohida hujjatga ajrating — u holda katta hujjat qayta o'qilmaydi</li>
+    <li>Tarixiy ma'lumotni tinglamang, uni bir marta o'qing</li>
+  </ul>
+
+  <h2>Xavfsizlik qoidalari</h2>
+  <p>Oxirgi va eng ko'p unutiladigan narsa. Sinov rejimida Firestore hammaga ochiq bo'ladi va ko'pchilik shu holda chiqaradi.</p>
+
+  <pre><code>match /orders/{id} {
+  allow read:   <span class="k">if</span> request.auth != <span class="k">null</span>
+             &amp;&amp; resource.data.uid == request.auth.uid;
+  allow create: <span class="k">if</span> request.auth != <span class="k">null</span>;
+  allow update: <span class="k">if</span> request.auth.token.admin == <span class="k">true</span>;
+}</code></pre>
+
+  <p>Qoidasiz baza — bu ochiq baza. Har kim ma'lumotni o'qishi va o'chirishi mumkin.</p>
+
+  <h2>Xulosa</h2>
+  <p>Firestore real vaqt sinxronizatsiyasini juda oson qiladi va aynan shu osonlik xavf tug'diradi: mahalliy holatni to'g'ridan-to'g'ri yozish odati bir necha qurilma paydo bo'lganda ma'lumot yo'qolishiga olib keladi.</p>
+  <p>Qoida: <strong>butun obyektni yozmang</strong>. Aniq maydonni yangilang, massivlar uchun <code>arrayUnion</code>, hisob-kitob uchun tranzaksiya ishlating.</p>
+
+  <div class="tags"><span class="tag">Firebase</span><span class="tag">Firestore</span><span class="tag">Realtime</span><span class="tag">PWA</span><span class="tag">Backend</span></div>
+
+  <div class="prevnext"><a href="yagona-faylli-pwa-arxitekturasi.html">&larr; Yagona faylli PWA</a><a href="aiogram-3-buyurtma-boti.html">aiogram 3 bot &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

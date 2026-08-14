@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>delay() o&#x27;rniga millis(): bloklamaydigan tugma bosish mantiqi — ITcoDe.Uz</title>
+<meta name="description" content="delay(3300) qurilmani uch soniyaga o&#x27;ldiradi — MQTT uziladi, GPS o&#x27;qilmaydi. State machine bilan bir vaqtda bir nechta ishni bajarish.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/millis-bloklamaydigan-tugma-bosish.html">
+<meta property="og:title" content="delay() o&#x27;rniga millis(): bloklamaydigan tugma bosish mantiqi">
+<meta property="og:description" content="delay(3300) qurilmani uch soniyaga o&#x27;ldiradi — MQTT uziladi, GPS o&#x27;qilmaydi. State machine bilan bir vaqtda bir nechta ishni bajarish.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">Arduino</p>
+  <h1>delay() o'rniga millis(): bloklamaydigan tugma bosish mantiqi</h1>
+  <p class="lede">Uzun bosishni <code>delay(3300)</code> bilan yozish oson. Lekin shu uch soniya davomida qurilma butunlay o'lik bo'ladi: MQTT uziladi, GPS o'qilmaydi, hech qanday buyruq qabul qilinmaydi.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~7 daqiqa</span></div>
+
+  <h2>Sodda yechim va uning narxi</h2>
+  <p>Push-start moduliga uzun signal berish kerak bo'lganda birinchi ko'ringan yechim shunday bo'ladi:</p>
+
+  <pre><code><span class="k">void</span> pressLong(uint8_t pin) {
+  digitalWrite(pin, HIGH);
+  delay(<span class="s">3300</span>);          <span class="c">// ← muammo shu yerda</span>
+  digitalWrite(pin, LOW);
+}</code></pre>
+
+  <p>Bu ishlaydi. Lekin <code>delay()</code> protsessorni to'liq to'xtatadi. Uch soniya davomida:</p>
+  <ul>
+    <li>MQTT kutubxonasi <code>loop()</code> chaqirilmaydi — broker qurilmani o'lgan deb hisoblaydi</li>
+    <li>GSM moduldan kelayotgan ma'lumot buferga sig'may yo'qoladi</li>
+    <li>GPS qatorlari o'qilmaydi, koordinata eskirdi</li>
+    <li>Yangi buyruq kelsa, u qabul qilinmaydi</li>
+    <li>Watchdog taymer ishga tushib, platani qayta yuklashi mumkin</li>
+  </ul>
+
+  <div class="card note">
+    <p><strong>Amaliy oqibat.</strong> Menda avtomobil o't oldirgandan keyin telefon "qurilma javob bermayapti" deb ko'rsatardi. Buyruq bajarilgan, lekin holat qaytmagan — chunki o'sha paytda MQTT uzilgan edi.</p>
+  </div>
+
+  <h2>Asosiy g'oya</h2>
+  <p>Kutish o'rniga <strong>vaqtni belgilab qo'yish</strong> kerak. Ya'ni: "hozir tugmani bosdim, uni 3300 millisekunddan keyin qo'yib yuboraman" deb yozib qo'yamiz va darhol boshqa ishlarga qaytamiz.</p>
+  <p>Har <code>loop()</code> aylanishida shunchaki tekshiramiz: vaqt keldimi? Kelgan bo'lsa — pinni tushiramiz.</p>
+
+  <h2>Amalga oshirish</h2>
+  <p>Uchta o'zgaruvchi yetarli: qaysi pin bosilgan, qachon bosilgan, qancha ushlanishi kerak.</p>
+
+  <pre><code><span class="k">struct</span> Press {
+  uint8_t  pin      = <span class="s">255</span>;   <span class="c">// 255 = bo'sh</span>
+  uint32_t startMs  = <span class="s">0</span>;
+  uint16_t holdMs   = <span class="s">0</span>;
+};
+
+Press active;
+
+<span class="k">bool</span> pressBegin(uint8_t pin, uint16_t holdMs) {
+  <span class="k">if</span> (active.pin != <span class="s">255</span>) <span class="k">return</span> <span class="k">false</span>;  <span class="c">// band</span>
+  active.pin     = pin;
+  active.startMs = millis();
+  active.holdMs  = holdMs;
+  digitalWrite(pin, HIGH);
+  <span class="k">return</span> <span class="k">true</span>;
+}
+
+<span class="k">void</span> pressUpdate() {
+  <span class="k">if</span> (active.pin == <span class="s">255</span>) <span class="k">return</span>;
+  <span class="k">if</span> (millis() - active.startMs &gt;= active.holdMs) {
+    digitalWrite(active.pin, LOW);
+    active.pin = <span class="s">255</span>;
+  }
+}</code></pre>
+
+  <p>Endi asosiy tsikl toza va uzluksiz ishlaydi:</p>
+
+  <pre><code><span class="k">void</span> loop() {
+  mqtt.loop();       <span class="c">// aloqa uzilmaydi</span>
+  gpsRead();         <span class="c">// koordinata yangilanadi</span>
+  sensorsUpdate();   <span class="c">// harorat o'qiladi</span>
+  pressUpdate();     <span class="c">// tugma o'z vaqtida qo'yib yuboriladi</span>
+}</code></pre>
+
+  <h2>Nima uchun ayirma, taqqoslash emas</h2>
+  <p>E'tibor bering, shart shunday yozilgan: <code>millis() - startMs >= holdMs</code>. Buni <code>millis() >= startMs + holdMs</code> deb yozish mumkindek tuyuladi, lekin bu xato.</p>
+  <p><code>millis()</code> taxminan 49 kundan keyin nolga qaytadi. Agar qurilma o'sha paytda tugmani bosayotgan bo'lsa, ikkinchi variant abadiy kutishga tushadi. Birinchi variant esa to'g'ri ishlaydi, chunki belgilanmagan butun sonlar ayirmasi to'lib ketishni o'zi hisobga oladi.</p>
+
+  <h2>Band holatni qaytarish</h2>
+  <p>Funksiya <code>false</code> qaytarganda buyruq bajarilmagan bo'ladi. Buni foydalanuvchiga bildirish kerak, aks holda u tugmani qayta-qayta bosaveradi:</p>
+
+  <pre><code><span class="k">if</span> (!pressBegin(PIN_START, T_LONG)) {
+  publishState(<span class="s">"busy"</span>);   <span class="c">// telefon "kuting" deb ko'rsatadi</span>
+}</code></pre>
+
+  <p>Bu bir vaqtda ikkita buyruq bajarilishining oldini oladi. Avtomobilda bu muhim — "qulfla" va "ochish" bir vaqtda ishga tushsa, modul noaniq holatga tushishi mumkin.</p>
+
+  <h2>Xuddi shu naqsh boshqa joylarda</h2>
+  <p>Bloklamaydigan yondashuv faqat tugmalar uchun emas. Men uni bir nechta joyda ishlataman:</p>
+
+  <table>
+    <thead><tr><th>Vazifa</th><th>Bloklaydigan usul</th><th>Bloklamaydigan usul</th></tr></thead>
+    <tbody>
+      <tr><td>Harorat o'qish</td><td><code>delay(750)</code></td><td><b>So'rov yuborib, keyin o'qish</b></td></tr>
+      <tr><td>Holat yuborish</td><td>Har tsiklda</td><td><b>5 soniyada bir marta</b></td></tr>
+      <tr><td>Qayta ulanish</td><td><code>delay(5000)</code></td><td><b>Vaqt belgisi bilan</b></td></tr>
+      <tr><td>Svetodiod miltillashi</td><td>Ikki <code>delay()</code></td><td><b>Interval tekshiruvi</b></td></tr>
+    </tbody>
+  </table>
+
+  <p>DS18B20 harorat datchigi yaxshi misol. U o'lchash uchun 750 millisekund vaqt talab qiladi. Kutish o'rniga: so'rov yuboriladi, vaqt belgilanadi, keyingi tsikllarda boshqa ishlar bajariladi va vaqt kelganda natija o'qiladi.</p>
+
+  <h2>Qachon delay() joiz</h2>
+  <p>Har doim ham uni tashlash shart emas. <code>delay()</code> quyidagi hollarda muammo tug'dirmaydi:</p>
+  <ul>
+    <li><code>setup()</code> ichida, hali hech narsa ishlamayotgan paytda</li>
+    <li>Juda qisqa pauzalarda — 1–5 millisekund</li>
+    <li>Faqat bitta ish bajaradigan sodda qurilmalarda</li>
+  </ul>
+  <p>Lekin tarmoqqa ulangan qurilmada asosiy tsikl ichida uzun <code>delay()</code> — bu deyarli har doim keyinchalik tushunarsiz xatolarga aylanadi.</p>
+
+  <h2>Xulosa</h2>
+  <p>State machine yondashuvi kodni biroz uzunroq qiladi, lekin qurilmani tirik saqlaydi. NBcaR da bu o'zgarishdan keyin MQTT uzilishlari butunlay to'xtadi va holat telefonda darhol yangilanadigan bo'ldi.</p>
+  <p>Qoida: <strong>asosiy tsikl hech qachon to'xtamasin</strong>. Kutish kerak bo'lsa — vaqtni belgilang, kutmang.</p>
+
+  <div class="tags"><span class="tag">Arduino</span><span class="tag">ESP32</span><span class="tag">millis</span><span class="tag">State machine</span><span class="tag">Embedded</span></div>
+
+  <div class="prevnext"><a href="mqtt-duplicate-client-id-muammosi.html">&larr; Duplicate client ID</a><a href="gps-fix-sifatini-filtrlash.html">GPS filtri &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

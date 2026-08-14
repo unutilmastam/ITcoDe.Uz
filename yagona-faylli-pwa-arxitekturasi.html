@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yagona faylli PWA: nega bitta HTML ba&#x27;zan to&#x27;g&#x27;ri tanlov — ITcoDe.Uz</title>
+<meta name="description" content="Build vositasisiz, node_modules&#x27;siz PWA. Qachon bu yondashuv ishlaydi, qachon esa muammoga aylanadi.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/yagona-faylli-pwa-arxitekturasi.html">
+<meta property="og:title" content="Yagona faylli PWA: nega bitta HTML ba&#x27;zan to&#x27;g&#x27;ri tanlov">
+<meta property="og:description" content="Build vositasisiz, node_modules&#x27;siz PWA. Qachon bu yondashuv ishlaydi, qachon esa muammoga aylanadi.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">PWA</p>
+  <h1>Yagona faylli PWA: nega bitta HTML ba'zan to'g'ri tanlov</h1>
+  <p class="lede">Zamonaviy frontend odatda o'nlab fayl, yuzlab paket va build bosqichidan iborat. Men esa ko'p loyihani bitta HTML faylida yozaman va buning aniq sabablari bor.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~7 daqiqa</span></div>
+
+  <h2>Nima demoqchiman</h2>
+  <p>Yagona faylli PWA — bu HTML, CSS va JavaScript bitta <code>index.html</code> ichida turgan ilova. Build vositasi yo'q, <code>node_modules</code> papkasi yo'q, kompilyatsiya bosqichi yo'q. Faylni serverga tashladingiz — ilova ishlaydi.</p>
+  <p>Bu 2005-yilga qaytish emas. Zamonaviy brauzer ko'p narsani o'zi qila oladi: CSS o'zgaruvchilari, grid, modul importi, async funksiyalar. Ilgari kutubxona talab qilgan ishlarning ko'pi endi standartda bor.</p>
+
+  <h2>Nima uchun shunday qilaman</h2>
+
+  <h3>Men telefonda ishlayman</h3>
+  <p>Ko'p kodni iPhone'dan yozaman. Bunda <code>npm install</code> ni ishga tushira olmayman, terminal ochib build qila olmayman. Bitta fayl esa istalgan muharrirda ochiladi, tahrirlanadi va to'g'ridan-to'g'ri GitHub'ga yuklanadi.</p>
+
+  <h3>Yuklanish tezligi</h3>
+  <p>Bitta so'rov — bitta javob. Brauzer 40 ta faylni navbat bilan yuklab, ularning bog'lanishini kutmaydi. Sekin mobil internetda bu farq sezilarli: sahifa bir soniyada ochiladi.</p>
+
+  <h3>Hosting arzon va oddiy</h3>
+  <p>Statik fayl GitHub Pages, Firebase Hosting yoki oddiy hostingda bepul turadi. Server kerak emas, konteyner kerak emas, oylik to'lov yo'q.</p>
+
+  <h3>Bir yildan keyin ham ochiladi</h3>
+  <p>Bu men uchun eng muhim sabab. Build tizimiga bog'liq loyihani bir yildan keyin ochsangiz, paketlar eskirgan, versiyalar mos kelmaydi, kompilyator xato beradi. Bitta HTML fayl esa besh yildan keyin ham xuddi shunday ochiladi.</p>
+
+  <div class="card note">
+    <p><strong>Amaliy misol.</strong> Bir mijoz uchun ikki yil oldin yasagan panelni yaqinda yangilashim kerak bo'ldi. Faylni ochdim, kerakli joyni o'zgartirdim, qayta yukladim. Jami 20 daqiqa. Agar u React loyihasi bo'lganida, avval muhitni tiklashga kun ketardi.</p>
+  </div>
+
+  <h2>Ichki tuzilma</h2>
+  <p>Bitta fayl demak tartibsizlik degani emas. Men doim shu tartibda yozaman:</p>
+
+  <pre><code>&lt;head&gt;
+  meta, title, manifest havolasi
+  &lt;style&gt;
+    :root { --tokenlar }
+    asosiy uslublar
+    komponent uslublari
+    media so'rovlari
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  header / main / footer
+  &lt;script&gt;
+    konfiguratsiya
+    holat (state)
+    ma'lumot qatlami
+    render funksiyalari
+    hodisa tinglovchilari
+    ishga tushirish
+  &lt;/script&gt;
+&lt;/body&gt;</code></pre>
+
+  <p>CSS da o'zgaruvchilar orqali dizayn tizimi tuziladi — ranglar, shriftlar, radiuslar bir joyda. Keyin ularni bitta joyda o'zgartirib, butun ilovani qayta bo'yash mumkin.</p>
+
+  <h2>PWA qiladigan narsalar</h2>
+  <p>Oddiy sahifani o'rnatiladigan ilovaga aylantirish uchun ikki narsa kerak: manifest va service worker.</p>
+
+  <pre><code><span class="c">// manifest.json</span>
+{
+  <span class="s">"name"</span>: <span class="s">"Unutilmas Ta'm"</span>,
+  <span class="s">"short_name"</span>: <span class="s">"Unutilmas"</span>,
+  <span class="s">"start_url"</span>: <span class="s">"/"</span>,
+  <span class="s">"display"</span>: <span class="s">"standalone"</span>,
+  <span class="s">"background_color"</span>: <span class="s">"#0A1020"</span>,
+  <span class="s">"theme_color"</span>: <span class="s">"#22A6FF"</span>,
+  <span class="s">"icons"</span>: [ ... ]
+}</code></pre>
+
+  <p>Service worker esa oflayn ishlashni ta'minlaydi. Eng oddiy strategiya: birinchi ochilishda fayllarni keshga saqlash, keyingi safar keshdan berish va fonda yangilash.</p>
+
+  <div class="card note">
+    <p><strong>Ehtiyot bo'ling.</strong> Service worker keshi yangilanishni murakkablashtiradi. Foydalanuvchi eski versiyani ko'rib turishi mumkin. Men har chiqarishda kesh nomiga versiya raqamini qo'shaman — <code>cache-v8-1</code> kabi. Eski kesh o'chiriladi va yangi fayllar yuklanadi.</p>
+  </div>
+
+  <h2>Qachon bu yondashuv ishlamaydi</h2>
+  <p>Halol bo'lish kerak — bu universal yechim emas. Quyidagi hollarda oddiy build tizimiga o'tish kerak:</p>
+  <ul>
+    <li><strong>Bir necha dasturchi</strong> ishlayotgan bo'lsa — bitta faylda Git konfliktlari doimiy bo'ladi</li>
+    <li><strong>Kod 3000 satrdan oshsa</strong> — navigatsiya qiyinlashadi, izlash ko'p vaqt oladi</li>
+    <li><strong>Murakkab holat boshqaruvi</strong> kerak bo'lsa — ko'p ekranli, ko'p oqimli ilovalarda</li>
+    <li><strong>TypeScript</strong> kerak bo'lsa — tur tekshiruvi katta loyihada ko'p xatoni oldini oladi</li>
+    <li><strong>Tayyor komponent kutubxonasi</strong> ishlatilsa</li>
+  </ul>
+  <p>Menda chegara taxminan shunday: 2500–3000 satrgacha bitta fayl qulay. Undan oshsa, bo'laklarga ajrataman.</p>
+
+  <h2>Oraliq yechim</h2>
+  <p>Build vositasisiz ham fayllarni ajratish mumkin — ES modullari orqali:</p>
+
+  <pre><code>&lt;script type=<span class="s">"module"</span>&gt;
+  <span class="k">import</span> { renderCart } <span class="k">from</span> <span class="s">'./cart.js'</span>;
+  <span class="k">import</span> { db }         <span class="k">from</span> <span class="s">'./db.js'</span>;
+&lt;/script&gt;</code></pre>
+
+  <p>Brauzer modullarni o'zi yuklaydi, kompilyator kerak emas. Bu bitta faylning soddaligi bilan bir nechta faylning tartibi orasidagi oraliq nuqta.</p>
+
+  <h2>Xulosa</h2>
+  <p>Yagona faylli yondashuv — moda emas, aniq sharoitga moslashtirilgan tanlov. Kichik va o'rta ilovalar uchun, ayniqsa cheklangan muhitda ishlaganda, u tez, arzon va uzoq yashaydi.</p>
+  <p>Asosiy savol "qaysi texnologiya zamonaviy?" emas, balki "bu loyihani bir yildan keyin kim va qanday sharoitda yangilaydi?" bo'lishi kerak.</p>
+
+  <div class="tags"><span class="tag">PWA</span><span class="tag">HTML</span><span class="tag">Service Worker</span><span class="tag">Frontend</span><span class="tag">Arxitektura</span></div>
+
+  <div class="prevnext"><a href="gps-fix-sifatini-filtrlash.html">&larr; GPS filtri</a><a href="firestore-realtime-sinxronizatsiya.html">Firestore realtime &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

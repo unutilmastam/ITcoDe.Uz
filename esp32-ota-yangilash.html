@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ESP32 uchun OTA: qurilmani ochmasdan dasturini yangilash — ITcoDe.Uz</title>
+<meta name="description" content="Avtomobilga o&#x27;rnatilgan platani har safar chiqarib olish mumkin emas. Havo orqali yangilash, uni xavfsiz qilish va rollback muammosi.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/esp32-ota-yangilash.html">
+<meta property="og:title" content="ESP32 uchun OTA: qurilmani ochmasdan dasturini yangilash">
+<meta property="og:description" content="Avtomobilga o&#x27;rnatilgan platani har safar chiqarib olish mumkin emas. Havo orqali yangilash, uni xavfsiz qilish va rollback muammosi.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">IoT</p>
+  <h1>ESP32 uchun OTA: qurilmani ochmasdan dasturini yangilash</h1>
+  <p class="lede">Plata avtomobil torpedosi ostiga o'rnatilgan. Har kichik tuzatish uchun uni chiqarib olish, USB ulash va qayta yig'ish — bu bir soatlik ish. OTA buni bir daqiqaga aylantiradi.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~7 daqiqa</span></div>
+
+  <h2>OTA nima qiladi</h2>
+  <p>ESP32 xotirasi ikkita dastur bo'limiga bo'linadi. Bittasida joriy dastur ishlaydi, ikkinchisi bo'sh turadi. Yangilash paytida yangi kod bo'sh bo'limga yoziladi, keyin yuklash bayrog'i almashtiriladi va plata qayta yuklanadi.</p>
+  <p>Muhim jihat: <strong>yozish paytida eski dastur ishlab turadi</strong>. Agar yuklash yarmida uzilsa, plata eski versiya bilan qayta ishga tushadi. Bu xavfsizlikning asosiy mexanizmi.</p>
+
+  <div class="card note">
+    <p><strong>Xotira talabi.</strong> Ikkita bo'lim degani — dasturingiz flesh xotiraning yarmidan katta bo'lmasligi kerak. 4 MB li ESP32 da har bo'limga taxminan 1.9 MB to'g'ri keladi. Loyihangiz shundan oshsa, OTA umuman ishlamaydi.</p>
+  </div>
+
+  <h2>Eng oddiy usul: ArduinoOTA</h2>
+  <p>Agar plata siz bilan bir Wi-Fi tarmoqda bo'lsa, bu eng tez yo'l:</p>
+
+  <pre><code><span class="k">#include</span> &lt;ArduinoOTA.h&gt;
+
+<span class="k">void</span> setupOTA() {
+  ArduinoOTA.setHostname(<span class="s">"nbcar-dev"</span>);
+  ArduinoOTA.setPassword(<span class="s">"kuchli-parol"</span>);
+
+  ArduinoOTA.onStart([]() {
+    <span class="c">// yangilash boshlanishida xavfli chiqishlarni tushiramiz</span>
+    digitalWrite(PIN_START, LOW);
+    digitalWrite(PIN_LOCK,  LOW);
+    digitalWrite(PIN_OPEN,  LOW);
+  });
+
+  ArduinoOTA.begin();
+}
+
+<span class="k">void</span> loop() {
+  ArduinoOTA.handle();
+  <span class="c">// qolgan ishlar</span>
+}</code></pre>
+
+  <p><code>onStart</code> ichidagi qism e'tibordan chetda qolmasin. Yangilash paytida GPIO holati noaniq bo'lishi mumkin — agar o't oldirish chiqishi ko'tarilib qolsa, avtomobil o'zi ishga tushadi.</p>
+  <p>Parolni albatta qo'ying. Usiz tarmoqdagi har kim qurilmangizga o'z dasturini yuklashi mumkin.</p>
+
+  <h2>Masofadan yangilash: HTTP orqali</h2>
+  <p>Avtomobil uydan uzoqda bo'lganda Wi-Fi ishlamaydi. Bunda qurilmaning o'zi serverdan yangi dasturni yuklab oladi.</p>
+
+  <pre><code><span class="k">#include</span> &lt;HTTPUpdate.h&gt;
+
+<span class="k">bool</span> tryUpdate(<span class="k">const</span> String&amp; url) {
+  WiFiClientSecure client;
+  client.setCACert(ROOT_CA);
+
+  httpUpdate.rebootOnUpdate(<span class="k">false</span>);
+  t_httpUpdate_return r = httpUpdate.update(client, url);
+
+  <span class="k">switch</span> (r) {
+    <span class="k">case</span> HTTP_UPDATE_OK:
+      publishState(<span class="s">"updated"</span>);
+      delay(<span class="s">1000</span>);
+      ESP.restart();
+      <span class="k">return</span> <span class="k">true</span>;
+    <span class="k">case</span> HTTP_UPDATE_NO_UPDATES:
+      <span class="k">return</span> <span class="k">false</span>;
+    <span class="k">default</span>:
+      Serial.println(httpUpdate.getLastErrorString());
+      <span class="k">return</span> <span class="k">false</span>;
+  }
+}</code></pre>
+
+  <p><code>rebootOnUpdate(false)</code> — bu men keyinchalik qo'shgan qator. Standart holatda kutubxona darhol qayta yuklaydi va siz natijani bilib olmaysiz. Qo'lda boshqarganda esa avval holatni yuborib, keyin qayta yuklash mumkin.</p>
+
+  <h2>Versiyani tekshirish</h2>
+  <p>Qurilma har safar butun faylni yuklab olmasligi kerak. Avval kichik JSON tekshiriladi:</p>
+
+  <pre><code>{
+  <span class="s">"version"</span>: <span class="s">"1.7.2"</span>,
+  <span class="s">"url"</span>: <span class="s">"https://.../nbcar-1.7.2.bin"</span>,
+  <span class="s">"md5"</span>: <span class="s">"a3f5..."</span>,
+  <span class="s">"min"</span>: <span class="s">"1.5.0"</span>
+}</code></pre>
+
+  <p>Agar joriy versiya yangisidan past bo'lsa — yangilanadi. <code>min</code> maydoni esa juda eski versiyadan sakrab o'tishni taqiqlaydi, chunki oradagi ma'lumot formati o'zgargan bo'lishi mumkin.</p>
+
+  <h2>Qachon yangilamaslik kerak</h2>
+  <p>Bu men birinchi versiyada o'ylamagan narsa. Yangilash noto'g'ri paytda boshlansa, muammo tug'iladi:</p>
+  <ul>
+    <li><strong>Dvigatel ishlab turganda</strong> — qayta yuklanish paytida boshqaruv yo'qoladi</li>
+    <li><strong>Buyruq bajarilayotganda</strong> — tugma bosilgan holatda qotib qolishi mumkin</li>
+    <li><strong>Kuchlanish past bo'lganda</strong> — yozish yarmida uzilib qolish xavfi</li>
+    <li><strong>Signal zaif bo'lganda</strong> — yuklash cho'zilib, uzilishi ehtimoli oshadi</li>
+  </ul>
+
+  <pre><code><span class="k">bool</span> safeToUpdate() {
+  <span class="k">if</span> (engineRunning())        <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">if</span> (active.pin != <span class="s">255</span>)     <span class="k">return</span> <span class="k">false</span>;   <span class="c">// tugma bosilgan</span>
+  <span class="k">if</span> (batteryVolts() &lt; <span class="s">12.0</span>) <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">if</span> (signalQuality() &lt; <span class="s">15</span>)  <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">return</span> <span class="k">true</span>;
+}</code></pre>
+
+  <p>Shart bajarilmasa, yangilash keyingi qulay paytga qoldiriladi.</p>
+
+  <h2>Rollback muammosi</h2>
+  <p>Eng qiyin holat: yangi dastur yuklandi, plata qayta ishga tushdi — lekin kodda xato bor va u tarmoqqa ulanmaydi. Endi siz uni masofadan tuzata olmaysiz, chunki OTA ham ishlamaydi.</p>
+  <p>ESP32 da buning uchun mexanizm bor. Yangi dastur birinchi marta ishga tushganda "sinov" holatida bo'ladi va u o'zini tasdiqlashi kerak:</p>
+
+  <pre><code><span class="k">#include</span> &lt;esp_ota_ops.h&gt;
+
+<span class="k">void</span> confirmBoot() {
+  <span class="c">// faqat asosiy funksiyalar ishlaganidan keyin chaqiriladi</span>
+  <span class="k">if</span> (mqttConnected &amp;&amp; gsmRegistered) {
+    esp_ota_mark_app_valid_cancel_rollback();
+  }
+}</code></pre>
+
+  <p>Agar dastur belgilangan vaqt ichida o'zini tasdiqlamasa va qayta yuklansa, bootloader avtomatik ravishda eski versiyaga qaytadi. Bu funksiyani ishlatish uchun bo'limlar jadvalida rollback yoqilgan bo'lishi kerak.</p>
+
+  <div class="card note">
+    <p><strong>Amaliy maslahat.</strong> Yangi versiyani avval stoldagi ikkinchi platada sinab ko'ring. Menda alohida "sinov" qurilmasi bor va har chiqarish avval unga boradi. Bu bir necha marta avtomobildagi platani qutqargan.</p>
+  </div>
+
+  <h2>Xavfsizlik</h2>
+  <p>OTA — bu qurilmaga ixtiyoriy kod yuklash imkoniyati. Agar u himoyalanmagan bo'lsa, tizimingizdagi eng zaif nuqta shu bo'ladi. Minimal talablar:</p>
+  <ul>
+    <li>Faqat HTTPS, sertifikat tekshiruvi bilan — oddiy HTTP da hujumchi faylni almashtirishi mumkin</li>
+    <li>MD5 yoki SHA tekshiruvi — yuklab olingan fayl butunligini tasdiqlash</li>
+    <li>Yangilash buyrug'i faqat tasdiqlangan foydalanuvchidan kelishi</li>
+    <li>Faylni ochiq manzilda saqlamang, hech bo'lmasa taxmin qilib bo'lmaydigan nom bering</li>
+  </ul>
+
+  <h2>Xulosa</h2>
+  <p>OTA o'rnatilgan qurilma bilan ishlashni butunlay o'zgartiradi: tuzatish endi soatlar emas, daqiqalar oladi. Lekin u xavf ham qo'shadi — noto'g'ri yangilash qurilmani qo'lingiz yetmaydigan holga keltirishi mumkin.</p>
+  <p>Uchta himoya majburiy: <strong>qachon yangilash mumkinligini tekshirish</strong>, <strong>rollback</strong> va <strong>sinov qurilmasi</strong>.</p>
+
+  <div class="tags"><span class="tag">ESP32</span><span class="tag">OTA</span><span class="tag">Firmware</span><span class="tag">IoT</span><span class="tag">Xavfsizlik</span></div>
+
+  <div class="prevnext"><a href="aiogram-3-buyurtma-boti.html">&larr; aiogram 3 bot</a><a href="telegram-bot-render-keep-alive.html">Render keep-alive &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

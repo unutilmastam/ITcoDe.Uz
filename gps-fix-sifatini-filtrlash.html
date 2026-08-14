@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GPS yolg&#x27;on koordinata beryapti: fix sifatini filtrlash — ITcoDe.Uz</title>
+<meta name="description" content="Modul koordinata qaytaradi, lekin u ishonchsiz. Sun&#x27;iy yo&#x27;ldosh soni va HDOP orqali yaroqsiz nuqtalarni tashlab yuborish.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/gps-fix-sifatini-filtrlash.html">
+<meta property="og:title" content="GPS yolg&#x27;on koordinata beryapti: fix sifatini filtrlash">
+<meta property="og:description" content="Modul koordinata qaytaradi, lekin u ishonchsiz. Sun&#x27;iy yo&#x27;ldosh soni va HDOP orqali yaroqsiz nuqtalarni tashlab yuborish.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">GPS</p>
+  <h1>GPS yolg'on koordinata beryapti: fix sifatini filtrlash</h1>
+  <p class="lede">Xaritada avtomobil goh joyida, goh qirq kilometr narida ko'rinardi. Modul ishlayapti, koordinata kelyapti — muammo shundaki, u koordinata ishonchsiz edi.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~6 daqiqa</span></div>
+
+  <h2>Muammoning ko'rinishi</h2>
+  <p>NBcaR ishga tushgach, xaritada avtomobil sakrab yurardi. Bir necha soniyada bir necha o'n kilometr "yurib" qaytardi. Avtomobil esa garajda turgan bo'lardi.</p>
+  <p>Birinchi taxmin — modul buzuq. Aslida modul to'g'ri ishlayotgan edi. Muammo mening kodimda: men <strong>har qanday</strong> koordinatani to'g'ri deb qabul qilayotgan edim.</p>
+
+  <h2>GPS moduli nima qaytaradi</h2>
+  <p>GPS qabul qilgichlari NMEA formatidagi matn qatorlarini uzatadi. Ulardan biri — <code>$GPGGA</code> — koordinata bilan birga <strong>uning sifatini</strong> ham bildiradi.</p>
+
+  <pre><code>$GPGGA,123519,4807.038,N,01131.000,E,1,03,8.9,545.4,M,...
+                                     │  │   │
+                                     │  │   └─ HDOP
+                                     │  └───── sun'iy yo'ldosh soni
+                                     └──────── fix turi</code></pre>
+
+  <p>Uchta muhim ko'rsatkich:</p>
+  <ul>
+    <li><strong>Fix turi</strong> — 0 bo'lsa koordinata umuman yo'q, 1 va undan yuqori bo'lsa bor</li>
+    <li><strong>Sun'iy yo'ldosh soni</strong> — nechta yo'ldosh ko'rinyapti</li>
+    <li><strong>HDOP</strong> — gorizontal aniqlik ko'rsatkichi, kichik bo'lgani yaxshi</li>
+  </ul>
+
+  <h2>HDOP nima anglatadi</h2>
+  <p>HDOP — yo'ldoshlarning osmondagi joylashuvi qanchalik qulay ekanini ko'rsatadi. Agar ular osmon bo'ylab keng tarqalgan bo'lsa, kesishma nuqta aniq chiqadi. Agar hammasi bir tomonda to'planib qolsa, kesishma cho'zilib ketadi va xato oshadi.</p>
+
+  <table>
+    <thead><tr><th>HDOP</th><th>Sifat</th><th>Amalda</th></tr></thead>
+    <tbody>
+      <tr><td><b>&lt; 2</b></td><td>Zo'r</td><td>Navigatsiya uchun yetarli</td></tr>
+      <tr><td><b>2–5</b></td><td>Yaxshi</td><td>Kuzatuv uchun to'g'ri keladi</td></tr>
+      <tr><td><b>5–10</b></td><td>O'rtacha</td><td>Xato o'nlab metr</td></tr>
+      <tr><td><b>&gt; 10</b></td><td>Yomon</td><td>Ishonib bo'lmaydi</td></tr>
+    </tbody>
+  </table>
+
+  <p>Mening sakrab yuruvchi nuqtalarim aynan HDOP 12–20 oralig'idagi o'lchovlar edi. Modul ularni to'g'ri belgilagan, men esa belgini o'qimagan edim.</p>
+
+  <h2>Filtr</h2>
+  <p>Yechim oddiy — koordinatani qabul qilishdan oldin uchta shartni tekshirish:</p>
+
+  <pre><code><span class="k">const</span> uint8_t MIN_SATS = <span class="s">4</span>;
+<span class="k">const</span> <span class="k">float</span>   MAX_HDOP = <span class="s">5.0</span>;
+
+<span class="k">bool</span> fixIsGood() {
+  <span class="k">if</span> (!gps.location.isValid())         <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">if</span> (gps.satellites.value() &lt; MIN_SATS) <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">if</span> (gps.hdop.hdop() &gt; MAX_HDOP)      <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">if</span> (gps.location.age() &gt; <span class="s">2000</span>)        <span class="k">return</span> <span class="k">false</span>;
+  <span class="k">return</span> <span class="k">true</span>;
+}</code></pre>
+
+  <p>To'rtinchi shart — <code>age()</code> — kam eslanadi, lekin muhim. TinyGPS++ oxirgi ma'lum koordinatani saqlab turadi. Agar modul signalni yo'qotsa, kutubxona eski qiymatni qaytaraverdi va siz uni yangi deb o'ylaysiz. Ikki soniyadan eski ma'lumotni tashlab yuborish kerak.</p>
+
+  <p>Nima uchun kamida 4 ta yo'ldosh: uchtasi bilan faqat kenglik va uzunlik hisoblanadi, to'rtinchisi vaqt xatosini tuzatish uchun kerak. Uchta yo'ldosh bilan olingan koordinata rasmiy jihatdan to'g'ri, amalda esa ishonchsiz.</p>
+
+  <div class="card note">
+    <p><strong>Natija.</strong> Filtr qo'yilgandan keyin sakrash butunlay to'xtadi. Koordinata biroz kamroq tez-tez yangilanadigan bo'ldi, lekin har bir nuqta ishonchli.</p>
+  </div>
+
+  <h2>Eski nuqtani ko'rsatish</h2>
+  <p>Filtr o'tmaganda nima qilish kerak? Ikki variant bor va tanlov vazifaga bog'liq.</p>
+  <p>Avtomobil kuzatuvi uchun men <strong>oxirgi yaxshi nuqtani saqlab turishni</strong> tanladim. Foydalanuvchiga "avtomobil shu yerda edi" deb ko'rsatish, "joylashuv noma'lum" deyishdan foydaliroq. Lekin vaqt belgisi bilan birga:</p>
+
+  <pre><code>{
+  <span class="s">"lat"</span>: <span class="s">38.2733</span>,
+  <span class="s">"lon"</span>: <span class="s">67.8942</span>,
+  <span class="s">"sats"</span>: <span class="s">7</span>,
+  <span class="s">"hdop"</span>: <span class="s">1.8</span>,
+  <span class="s">"fresh"</span>: <span class="k">false</span>,
+  <span class="s">"agoSec"</span>: <span class="s">142</span>
+}</code></pre>
+
+  <p>Ilovada esa eski nuqta boshqa rangda va "2 daqiqa oldin" yozuvi bilan ko'rsatiladi. Foydalanuvchi ma'lumot qanchalik yangi ekanini biladi va o'zi qaror qabul qiladi.</p>
+
+  <h2>Sovuq start</h2>
+  <p>Yana bir kutilmagan narsa: modul birinchi marta yoqilganda koordinata topishga <strong>30 soniyadan bir necha daqiqagacha</strong> vaqt ketadi. Bu normal — u yo'ldoshlar jadvalini yuklab olishi kerak.</p>
+  <p>Agar qurilma tez-tez o'chib-yonsa, har safar shu kutish takrorlanadi. Yechim — GPS modulini doimiy quvvatda saqlash yoki batareya bilan ta'minlangan modul ishlatish, u holda jadval saqlanib qoladi va start bir necha soniyaga qisqaradi.</p>
+
+  <h2>Antenna joylashuvi</h2>
+  <p>Kod qanchalik to'g'ri bo'lmasin, antenna noto'g'ri joylashsa natija yomon bo'ladi. Amaliy kuzatuvlarim:</p>
+  <ul>
+    <li>Antenna osmonga qaragan bo'lishi kerak, yon tomonga emas</li>
+    <li>Metall ustida ishlaydi, metall ostida ishlamaydi</li>
+    <li>Torpedo ostida — yomon, shisha oldida — yaxshi</li>
+    <li>SIM800L antennasidan uzoqroq qo'ying, GSM uzatishi GPS ni bo'g'adi</li>
+  </ul>
+  <p>Oxirgi punkt menda bir kun vaqt oldi: GSM xabar yuborilgan har safar GPS aniqligi keskin tushardi. Ikki antennani 15 santimetr uzoqlashtirish muammoni hal qildi.</p>
+
+  <h2>Xulosa</h2>
+  <p>GPS moduli sizga koordinata bilan birga uning sifati haqida ham xabar beradi. Bu ma'lumotni e'tiborsiz qoldirish — xaritada sakrab yuruvchi nuqtalar demakdir.</p>
+  <p>Ikkita raqamni tekshiring: yo'ldosh soni va HDOP. Bu ikki qator kod tizimning ishonchliligini butunlay o'zgartiradi.</p>
+
+  <div class="tags"><span class="tag">GPS</span><span class="tag">NMEA</span><span class="tag">TinyGPS++</span><span class="tag">ESP32</span><span class="tag">HDOP</span></div>
+
+  <div class="prevnext"><a href="millis-bloklamaydigan-tugma-bosish.html">&larr; millis() state machine</a><a href="yagona-faylli-pwa-arxitekturasi.html">Yagona faylli PWA &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

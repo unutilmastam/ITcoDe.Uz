@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>aiogram 3 bilan buyurtma qabul qiluvchi Telegram bot — ITcoDe.Uz</title>
+<meta name="description" content="FSM orqali bosqichma-bosqich buyurtma yig&#x27;ish, tugmalar, ma&#x27;lumot saqlash va admin xabarnomasi — ishlaydigan tuzilma.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/aiogram-3-buyurtma-boti.html">
+<meta property="og:title" content="aiogram 3 bilan buyurtma qabul qiluvchi Telegram bot">
+<meta property="og:description" content="FSM orqali bosqichma-bosqich buyurtma yig&#x27;ish, tugmalar, ma&#x27;lumot saqlash va admin xabarnomasi — ishlaydigan tuzilma.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">Telegram</p>
+  <h1>aiogram 3 bilan buyurtma qabul qiluvchi Telegram bot</h1>
+  <p class="lede">Kichik biznes uchun Telegram bot ko'pincha saytdan foydaliroq: mijoz allaqachon shu ilovada, ro'yxatdan o'tish shart emas, xabar darhol keladi.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~8 daqiqa</span></div>
+
+  <h2>aiogram 3 va 2 farqi</h2>
+  <p>Internetdagi ko'p namuna hali ham 2-versiyada yozilgan va ular 3-versiyada ishlamaydi. Asosiy farqlar:</p>
+
+  <table>
+    <thead><tr><th></th><th>aiogram 2</th><th>aiogram 3</th></tr></thead>
+    <tbody>
+      <tr><td>Handler</td><td><code>@dp.message_handler</code></td><td><b><code>@router.message</code></b></td></tr>
+      <tr><td>Filtrlar</td><td>Argument sifatida</td><td><b>Alohida obyekt</b></td></tr>
+      <tr><td>Tuzilma</td><td>Dispatcher markaziy</td><td><b>Router'lar</b></td></tr>
+      <tr><td>Ishga tushirish</td><td><code>executor</code></td><td><b><code>asyncio.run</code></b></td></tr>
+    </tbody>
+  </table>
+
+  <p>Router'lar tizimi katta botni bo'laklarga ajratish imkonini beradi — buyurtma alohida faylda, admin alohida faylda.</p>
+
+  <h2>Skelet</h2>
+
+  <pre><code><span class="k">import</span> asyncio, logging
+<span class="k">from</span> aiogram <span class="k">import</span> Bot, Dispatcher, Router, F
+<span class="k">from</span> aiogram.filters <span class="k">import</span> CommandStart
+<span class="k">from</span> aiogram.fsm.storage.memory <span class="k">import</span> MemoryStorage
+
+router = Router()
+
+<span class="k">async def</span> main():
+    bot = Bot(token=TOKEN)
+    dp  = Dispatcher(storage=MemoryStorage())
+    dp.include_router(router)
+    <span class="k">await</span> dp.start_polling(bot)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())</code></pre>
+
+  <h2>FSM — bosqichma-bosqich suhbat</h2>
+  <p>Buyurtma bir xabarda kelmaydi. Avval mahsulot, keyin miqdor, keyin manzil, keyin telefon. Bot har foydalanuvchi qaysi bosqichda ekanini eslab turishi kerak.</p>
+  <p>Buning uchun holat mashinasi ishlatiladi:</p>
+
+  <pre><code><span class="k">from</span> aiogram.fsm.state <span class="k">import</span> State, StatesGroup
+
+<span class="k">class</span> Order(StatesGroup):
+    product = State()
+    qty     = State()
+    address = State()
+    phone   = State()
+    confirm = State()</code></pre>
+
+  <p>Har bosqichda javob olinadi, saqlanadi va keyingi holatga o'tiladi:</p>
+
+  <pre><code>@router.message(CommandStart())
+<span class="k">async def</span> start(msg, state):
+    <span class="k">await</span> state.clear()
+    <span class="k">await</span> state.set_state(Order.product)
+    <span class="k">await</span> msg.answer(<span class="s">"Nima buyurtma qilamiz?"</span>, reply_markup=menu_kb())
+
+@router.message(Order.qty, F.text.regexp(<span class="s">r"^\d+$"</span>))
+<span class="k">async def</span> get_qty(msg, state):
+    <span class="k">await</span> state.update_data(qty=<span class="k">int</span>(msg.text))
+    <span class="k">await</span> state.set_state(Order.address)
+    <span class="k">await</span> msg.answer(<span class="s">"Manzilni yozing yoki joylashuvni yuboring."</span>)</code></pre>
+
+  <div class="card note">
+    <p><strong>Muhim detal.</strong> <code>F.text.regexp</code> filtri faqat raqam kiritilgandagina ishlaydi. Agar foydalanuvchi matn yozsa, bu handler chaqirilmaydi. Shuning uchun har bosqich uchun "noto'g'ri kiritish" handleri ham kerak, aks holda bot jim qoladi va foydalanuvchi nima bo'lganini tushunmaydi.</p>
+  </div>
+
+  <pre><code>@router.message(Order.qty)
+<span class="k">async def</span> qty_invalid(msg):
+    <span class="k">await</span> msg.answer(<span class="s">"Faqat raqam kiriting. Masalan: 2"</span>)</code></pre>
+
+  <p>Tartib muhim — aniqroq filtr yuqorida, umumiysi pastda turishi kerak.</p>
+
+  <h2>Tugmalar</h2>
+  <p>Matn kiritishdan ko'ra tugma bosish qulayroq va xato kamroq bo'ladi:</p>
+
+  <pre><code><span class="k">from</span> aiogram.types <span class="k">import</span> InlineKeyboardMarkup, InlineKeyboardButton
+
+<span class="k">def</span> menu_kb():
+    rows = [
+        [InlineKeyboardButton(text=p[<span class="s">"name"</span>],
+                              callback_data=<span class="s">f"p:{p['id']}"</span>)]
+        <span class="k">for</span> p <span class="k">in</span> PRODUCTS
+    ]
+    <span class="k">return</span> InlineKeyboardMarkup(inline_keyboard=rows)
+
+@router.callback_query(F.data.startswith(<span class="s">"p:"</span>))
+<span class="k">async def</span> pick(cb, state):
+    pid = cb.data.split(<span class="s">":"</span>)[<span class="s">1</span>]
+    <span class="k">await</span> state.update_data(product=pid)
+    <span class="k">await</span> state.set_state(Order.qty)
+    <span class="k">await</span> cb.message.answer(<span class="s">"Nechta kerak?"</span>)
+    <span class="k">await</span> cb.answer()</code></pre>
+
+  <p>Oxirgi qator — <code>cb.answer()</code> — unutilmasin. Usiz Telegram tugmada aylanuvchi belgi ko'rsatib turadi va foydalanuvchi bot osilib qolgan deb o'ylaydi.</p>
+
+  <h2>Xotira muammosi</h2>
+  <p><code>MemoryStorage</code> holatni operativ xotirada saqlaydi. Bot qayta ishga tushsa, barcha yarim tugallangan buyurtmalar yo'qoladi.</p>
+  <p>Ishlab chiqarish uchun men SQLite yoki Redis ishlataman. Kichik botlar uchun <code>aiosqlite</code> yetarli — alohida server kerak emas, fayl sifatida saqlanadi.</p>
+
+  <h2>Buyurtmani yakunlash</h2>
+  <p>Barcha ma'lumot yig'ilgach, tasdiqlash ko'rsatiladi va adminlarga xabar yuboriladi:</p>
+
+  <pre><code>@router.callback_query(F.data == <span class="s">"confirm"</span>)
+<span class="k">async def</span> confirm(cb, state, bot):
+    data = <span class="k">await</span> state.get_data()
+    oid  = <span class="k">await</span> save_order(data, cb.from_user.id)
+
+    text = (<span class="s">f"🆕 Buyurtma #{oid}\n"</span>
+            <span class="s">f"Mahsulot: {data['product']} × {data['qty']}\n"</span>
+            <span class="s">f"Manzil: {data['address']}\n"</span>
+            <span class="s">f"Telefon: {data['phone']}"</span>)
+
+    <span class="k">for</span> admin <span class="k">in</span> ADMINS:
+        <span class="k">try</span>:
+            <span class="k">await</span> bot.send_message(admin, text)
+        <span class="k">except</span> Exception <span class="k">as</span> e:
+            logging.warning(<span class="s">"admin %s: %s"</span>, admin, e)
+
+    <span class="k">await</span> state.clear()
+    <span class="k">await</span> cb.message.answer(<span class="s">f"Qabul qilindi. Raqam: #{oid}"</span>)</code></pre>
+
+  <p><code>try/except</code> shart. Agar admin botni bloklagan bo'lsa, xato chiqadi va u tsiklni to'xtatib, qolgan adminlarga xabar bormay qoladi.</p>
+
+  <h2>Joylashtirish</h2>
+  <p>Bot uzluksiz ishlashi kerak, ya'ni server talab qilinadi. Bepul variantlar orasida Render va Railway qulay.</p>
+  <p>Ammo bepul tarifda muhim cheklov bor: <strong>bir muddat so'rov bo'lmasa, xizmat uxlab qoladi</strong>. Birinchi xabar kelganda esa u uyg'onishga 30–50 soniya sarflaydi va foydalanuvchi javob kutib qoladi.</p>
+  <p>Yechim — tashqi cron xizmati orqali har 10 daqiqada bir marta so'rov yuborish. Buning uchun botga oddiy HTTP endpoint qo'shiladi:</p>
+
+  <pre><code><span class="k">from</span> aiohttp <span class="k">import</span> web
+
+<span class="k">async def</span> health(request):
+    <span class="k">return</span> web.Response(text=<span class="s">"ok"</span>)
+
+app = web.Application()
+app.router.add_get(<span class="s">"/health"</span>, health)</code></pre>
+
+  <p>Keyin cron-job.org kabi bepul xizmatda shu manzilga muntazam so'rov sozlanadi.</p>
+
+  <h2>Xulosa</h2>
+  <p>aiogram 3 da bot yozish murakkab emas, lekin uchta joyda ehtiyot bo'lish kerak: handler tartibi, holat saqlash usuli va bepul hostingdagi uyqu rejimi.</p>
+  <p>Bu uchtasi to'g'ri qo'yilsa, bot barqaror ishlaydi va mijoz uni sayt o'rniga ishlatishga rozi bo'ladi.</p>
+
+  <div class="tags"><span class="tag">Telegram</span><span class="tag">aiogram 3</span><span class="tag">Python</span><span class="tag">FSM</span><span class="tag">Bot</span></div>
+
+  <div class="prevnext"><a href="firestore-realtime-sinxronizatsiya.html">&larr; Firestore realtime</a><a href="esp32-ota-yangilash.html">OTA yangilash &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>

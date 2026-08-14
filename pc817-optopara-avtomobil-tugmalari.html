@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PC817 optopara bilan avtomobil tugmalarini boshqarish — ITcoDe.Uz</title>
+<meta name="description" content="Nega relening o&#x27;rniga optopara? 12 voltli avtomobil tarmog&#x27;ini 3.3 voltli ESP32 dan galvanik ajratish va push-start modulini xavfsiz ulash.">
+<meta name="theme-color" content="#05080F">
+<meta name="author" content="Bakhrullo Nasrulloyev">
+<link rel="canonical" href="https://itcode.uz/pc817-optopara-avtomobil-tugmalari.html">
+<meta property="og:title" content="PC817 optopara bilan avtomobil tugmalarini boshqarish">
+<meta property="og:description" content="Nega relening o&#x27;rniga optopara? 12 voltli avtomobil tarmog&#x27;ini 3.3 voltli ESP32 dan galvanik ajratish va push-start modulini xavfsiz ulash.">
+<meta property="og:type" content="article">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22A6FF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#A855F7"/>
+        </linearGradient></defs>
+        <circle cx="256" cy="256" r="238" fill="none" stroke="url(#g)" stroke-width="16"/>
+        <g fill="url(#g)"><rect x="188" y="176" width="31" height="31" rx="3"/><rect x="188" y="222" width="31" height="128" rx="3"/><path d="M231 222h100l-32 37h-68z"/><rect x="262" y="222" width="32" height="128" rx="3"/></g>
+      </svg>
+      <b>ITcoDe<i>.Uz</i></b>
+    </a>
+    <a class="back" href="blog.html">&larr; Maqolalar</a>
+  </div>
+</header>
+
+<main>
+<article class="wrap">
+  <p class="eyebrow">Elektronika</p>
+  <h1>PC817 optopara bilan avtomobil tugmalarini boshqarish</h1>
+  <p class="lede">ESP32 ni avtomobil tarmog'iga to'g'ridan-to'g'ri ulash — platani kuydirishning eng tez yo'li. Optopara ikki tomonni yorug'lik orqali ajratadi va bu farqni tushunish qurilmangizni saqlab qoladi.</p>
+  <div class="meta"><span>Bakhrullo Nasrulloyev</span><span>2026-08-14</span><span>~7 daqiqa</span></div>
+
+  <h2>Muammo nimada</h2>
+  <p>ESP32 chiqishi 3.3 volt bilan ishlaydi va bir pindan 12 milliamper atrofida tok bera oladi. Avtomobil tarmog'i esa butunlay boshqa dunyo:</p>
+  <ul>
+    <li>Nominal 12 volt, lekin generator ishlaganda 14.4 voltgacha ko'tariladi</li>
+    <li>Starter aylanganda 9 voltgacha tushib ketadi</li>
+    <li>Induktiv yuklamalar o'chganda qisqa muddatli yuqori kuchlanish impulslari chiqadi</li>
+    <li>"Yer" nuqtasi turli joylarda bir xil emas — kuzov orqali oqadigan tok farq yaratadi</li>
+  </ul>
+  <p>Bu muhitga 3.3 voltli mikrokontrollerni to'g'ridan-to'g'ri ulash — birinchi o't oldirishda plata bilan xayrlashish demakdir.</p>
+
+  <h2>Optopara qanday ishlaydi</h2>
+  <p>PC817 ichida ikkita komponent bor va ular <strong>bir-biriga elektr jihatdan ulanmagan</strong>: bir tomonda infraqizil svetodiod, ikkinchi tomonda fototranzistor. Svetodiod yonganda fototranzistor ochiladi.</p>
+  <p>Ya'ni signal yorug'lik orqali o'tadi. Ikki tomon orasida o'tkazgich yo'q — nazariy jihatdan bir necha kilovolt izolyatsiya beradi. 12 voltli tarmoqdagi har qanday impuls 3.3 voltli tomonga o'ta olmaydi.</p>
+
+  <div class="card note">
+    <p><strong>Asosiy g'oya.</strong> Optopara — bu tugmani "bosadigan" barmoqning o'rnini bosuvchi qurilma. U hech narsani ulamaydi, faqat push-start moduli ichidagi kontaktni qisqa vaqtga tutashtiradi, xuddi siz tugmani qo'lingiz bilan bosgandek.</p>
+  </div>
+
+  <h2>Ulash sxemasi</h2>
+  <p>Kirish tomoni (ESP32 tarafi) — svetodiod. Uni to'g'ridan-to'g'ri GPIO ga ulab bo'lmaydi, tok cheklovchi rezistor kerak.</p>
+
+  <pre><code><span class="c">ESP32 GPIO ──[ 220 Ω ]── anod (1-oyoq)</span>
+<span class="c">ESP32 GND  ───────────── katod (2-oyoq)</span>
+
+<span class="c">Chiqish tomoni (avtomobil tarafi):</span>
+<span class="c">Kollektor (4-oyoq) ── push-start modul tugma kontakti</span>
+<span class="c">Emitter   (3-oyoq) ── push-start modul yer kontakti</span></code></pre>
+
+  <p>Rezistor qiymati hisoblanadi: <code>(3.3V − 1.2V) / 0.01A ≈ 210 Ω</code>. Bu yerda 1.2 volt — svetodioddagi kuchlanish tushishi, 10 mA — kerakli tok. Amalda 220 Ω standart rezistor to'g'ri keladi.</p>
+
+  <h2>Yo'nalishga e'tibor bering</h2>
+  <p>Fototranzistor faqat bir yo'nalishda o'tkazadi. Kollektor va emitterni almashtirsangiz, sxema umuman ishlamaydi va siz sababini kodda qidirasiz.</p>
+  <p>PC817 korpusida nuqta yoki qirqim bilan birinchi oyoq belgilangan. Oyoqlar tartibi: 1 — anod, 2 — katod, 3 — emitter, 4 — kollektor.</p>
+
+  <h2>Kod tomoni</h2>
+  <p>ESP32 tomonida hech qanday murakkablik yo'q — oddiy raqamli chiqish:</p>
+
+  <pre><code><span class="k">const</span> uint8_t PIN_LOCK  = <span class="s">14</span>;
+<span class="k">const</span> uint8_t PIN_START = <span class="s">13</span>;
+<span class="k">const</span> uint8_t PIN_OPEN  = <span class="s">15</span>;
+
+<span class="k">void</span> setup() {
+  pinMode(PIN_LOCK,  OUTPUT);
+  pinMode(PIN_START, OUTPUT);
+  pinMode(PIN_OPEN,  OUTPUT);
+  <span class="c">// muhim: boshlanishida hammasi past bo'lsin</span>
+  digitalWrite(PIN_LOCK,  LOW);
+  digitalWrite(PIN_START, LOW);
+  digitalWrite(PIN_OPEN,  LOW);
+}</code></pre>
+
+  <div class="card note">
+    <p><strong>Ehtiyot bo'ling.</strong> ESP32 yuklanish paytida ba'zi pinlar qisqa vaqtga noaniq holatda bo'ladi. Agar o't oldirish pini shu paytda ko'tarilib qolsa, avtomobil o'zi o't oladi. Shuning uchun GPIO 0, 2 va 12 dan foydalanmang — ular yuklash rejimiga ta'sir qiladi.</p>
+  </div>
+
+  <h2>Nega rele emas</h2>
+  <p>Rele ham izolyatsiya beradi va ko'pchilik shundan boshlaydi. Lekin bu vazifa uchun optopara aniq afzalroq:</p>
+
+  <table>
+    <thead><tr><th></th><th>Optopara</th><th>Rele</th></tr></thead>
+    <tbody>
+      <tr><td>O'lchami</td><td><b>4 oyoqli mikrosxema</b></td><td>Bir necha marta katta</td></tr>
+      <tr><td>Tok sarfi</td><td><b>~10 mA</b></td><td>50–80 mA</td></tr>
+      <tr><td>Ishlash muddati</td><td><b>Cheklanmagan</b></td><td>Mexanik kontakt yeyiladi</td></tr>
+      <tr><td>Ovoz</td><td><b>Jimjit</b></td><td>Har bosishda shiqillaydi</td></tr>
+      <tr><td>Tezlik</td><td><b>Mikrosoniyalar</b></td><td>5–10 millisekund</td></tr>
+    </tbody>
+  </table>
+
+  <p>Rele katta tok o'tkazishi kerak bo'lgan joyda — masalan faralar yoki motor uchun — o'rinli. Tugma kontaktini tutashtirish uchun esa u ortiqcha.</p>
+
+  <h2>Sinab ko'rish tartibi</h2>
+  <p>Avtomobilga ulashdan oldin stolda tekshiring. Bu bosqichni o'tkazib yubormang:</p>
+  <ol>
+    <li>Optoparaning chiqish tomoniga multimetrni qarshilik rejimida ulang</li>
+    <li>ESP32 pinini ko'taring — qarshilik keskin tushishi kerak</li>
+    <li>Pinni tushiring — qarshilik yana yuqori bo'ladi</li>
+    <li>Shu tsiklni 20–30 marta takrorlang, uzilish bo'lmasligiga ishonch hosil qiling</li>
+  </ol>
+  <p>Faqat shundan keyin avtomobilga o'ting va birinchi ulanishni akkumulyator klemmasi uzilgan holda bajaring.</p>
+
+  <h2>Xulosa</h2>
+  <p>PC817 — arzon va oddiy komponent, lekin u butun tizimning ishonchliligini belgilaydi. Menda bir yildan ortiq ishlab turgan qurilmada aynan shu sxema turibdi va bironta ham uzilish bo'lmadi.</p>
+  <p>Asosiy qoida: mikrokontroller va avtomobil tarmog'i o'rtasida hech qachon to'g'ridan-to'g'ri elektr aloqasi bo'lmasin.</p>
+
+  <div class="tags"><span class="tag">PC817</span><span class="tag">Optopara</span><span class="tag">ESP32</span><span class="tag">Avto elektronika</span><span class="tag">Sxemotexnika</span></div>
+
+  <div class="prevnext"><a href="esp32-sim800l-masofadan-ot-oldirish.html">&larr; Masofadan o't oldirish</a><a href="mqtt-duplicate-client-id-muammosi.html">Duplicate client ID &rarr;</a></div>
+
+</article>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <nav class="foot-nav">
+      <a href="index.html">Bosh sahifa</a>
+      <a href="blog.html">Maqolalar</a>
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik</a>
+      <a href="terms.html">Shartlar</a>
+    </nav>
+    <small>&copy; 2026 ITcoDe.Uz</small>
+  </div>
+</footer>
+
+</body>
+</html>
