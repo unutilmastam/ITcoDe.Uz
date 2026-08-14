@@ -9,6 +9,7 @@
 <meta property="og:title" content="ITcoDe.Uz — Code · Innovate · Elevate">
 <meta property="og:description" content="Veb, mobil, IoT va AI yechimlari. Bitta qoʻldan.">
 <meta property="og:type" content="website">
+<link rel="canonical" href="https://itcode.uz/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -283,6 +284,11 @@ button.proj{width:100%;text-align:left;font-family:var(--f-body);cursor:pointer;
 footer{position:relative;z-index:2;border-top:1px solid var(--line);margin-top:90px;padding:34px 0 44px}
 .foot{display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between}
 .foot small{color:#4C5A78;font-family:var(--f-mono);font-size:12px}
+.foot-nav{display:flex;flex-wrap:wrap;gap:10px 20px;font-size:14px}
+.foot-nav a{color:var(--muted);transition:color .2s}
+.foot-nav a:hover{color:var(--text)}
+.foot-nav a:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:4px}
+@media (max-width:640px){.foot{gap:18px}.foot-nav{gap:10px 16px}}
 
 /* ---------- responsive ---------- */
 @media(max-width:960px){
@@ -375,6 +381,8 @@ footer{position:relative;z-index:2;border-top:1px solid var(--line);margin-top:9
     <a href="#loyihalar">Loyihalar</a>
     <a href="#stack">Stack</a>
     <a href="#aloqa">Bogʻlanish</a>
+    <a href="about.html">Biz haqimizda</a>
+    <a href="contact.html">Aloqa sahifasi</a>
   </div>
 </header>
 
@@ -777,6 +785,12 @@ footer{position:relative;z-index:2;border-top:1px solid var(--line);margin-top:9
       </svg>
       <b>ITcoDe<i>.Uz</i></b>
     </a>
+    <nav class="foot-nav">
+      <a href="about.html">Biz haqimizda</a>
+      <a href="contact.html">Aloqa</a>
+      <a href="privacy.html">Maxfiylik siyosati</a>
+      <a href="terms.html">Foydalanish shartlari</a>
+    </nav>
     <small>© 2026 ITcoDe.Uz — Code · Innovate · Elevate</small>
   </div>
 </footer>
