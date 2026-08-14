@@ -1,0 +1,82 @@
+[
+ {
+  "slug": "esp32-sim800l-masofadan-ot-oldirish",
+  "title": "ESP32 va SIM800L bilan avtomobilni masofadan o't oldirish",
+  "desc": "TTGO T-Call platasida GSM orqali avtomobilni boshqarish: quvvat muammosi, optopara ulanishi va push-start moduliga to'g'ri signal berish.",
+  "tag": "IoT · Avtomobil",
+  "short": "Masofadan o't oldirish",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "pc817-optopara-avtomobil-tugmalari",
+  "title": "PC817 optopara bilan avtomobil tugmalarini boshqarish",
+  "desc": "Nega relening o'rniga optopara? 12 voltli avtomobil tarmog'ini 3.3 voltli ESP32 dan galvanik ajratish va push-start modulini xavfsiz ulash.",
+  "tag": "Elektronika",
+  "short": "PC817 optopara",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "mqtt-duplicate-client-id-muammosi",
+  "title": "MQTT'da duplicate client ID: qurilma nega har 30 soniyada uziladi",
+  "desc": "Ikkita mijoz bir xil client ID bilan ulanganda broker ularni navbat bilan uzadi. Muammoni topish va client ID ni to'g'ri yasash usuli.",
+  "tag": "MQTT",
+  "short": "Duplicate client ID",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "millis-bloklamaydigan-tugma-bosish",
+  "title": "delay() o'rniga millis(): bloklamaydigan tugma bosish mantiqi",
+  "desc": "delay(3300) qurilmani uch soniyaga o'ldiradi — MQTT uziladi, GPS o'qilmaydi. State machine bilan bir vaqtda bir nechta ishni bajarish.",
+  "tag": "Arduino",
+  "short": "millis() state machine",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "gps-fix-sifatini-filtrlash",
+  "title": "GPS yolg'on koordinata beryapti: fix sifatini filtrlash",
+  "desc": "Modul koordinata qaytaradi, lekin u ishonchsiz. Sun'iy yo'ldosh soni va HDOP orqali yaroqsiz nuqtalarni tashlab yuborish.",
+  "tag": "GPS",
+  "short": "GPS filtri",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "yagona-faylli-pwa-arxitekturasi",
+  "title": "Yagona faylli PWA: nega bitta HTML ba'zan to'g'ri tanlov",
+  "desc": "Build vositasisiz, node_modules'siz PWA. Qachon bu yondashuv ishlaydi, qachon esa muammoga aylanadi.",
+  "tag": "PWA",
+  "short": "Yagona faylli PWA",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "firestore-realtime-sinxronizatsiya",
+  "title": "Firestore real vaqt sinxronizatsiyasi va men yo'l qo'ygan xato",
+  "desc": "onSnapshot bilan bir necha qurilma o'rtasida ma'lumot sinxronizatsiyasi, hamda mahalliy holat bulutdagi ma'lumotni yozib yuborgan hodisa.",
+  "tag": "Firebase",
+  "short": "Firestore realtime",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "aiogram-3-buyurtma-boti",
+  "title": "aiogram 3 bilan buyurtma qabul qiluvchi Telegram bot",
+  "desc": "FSM orqali bosqichma-bosqich buyurtma yig'ish, tugmalar, ma'lumot saqlash va admin xabarnomasi — ishlaydigan tuzilma.",
+  "tag": "Telegram",
+  "short": "aiogram 3 bot",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "esp32-ota-yangilash",
+  "title": "ESP32 uchun OTA: qurilmani ochmasdan dasturini yangilash",
+  "desc": "Avtomobilga o'rnatilgan platani har safar chiqarib olish mumkin emas. Havo orqali yangilash, uni xavfsiz qilish va rollback muammosi.",
+  "tag": "IoT",
+  "short": "OTA yangilash",
+  "date": "2026-08-14"
+ },
+ {
+  "slug": "telegram-bot-render-keep-alive",
+  "title": "Telegram botni Render'ga joylash va uyqu rejimi bilan kurash",
+  "desc": "Railway'dan Render'ga ko'chirish, webhook va polling tanlovi, bepul tarifda xizmatni tirik saqlash usuli.",
+  "tag": "DevOps",
+  "short": "Render keep-alive",
+  "date": "2026-08-14"
+ }
+]
